@@ -38,7 +38,7 @@ class ShareGlobalSettings
     {
         // Serverless deployments use remote object storage; do not try to create
         // a symlink in Vercel's read-only deployment filesystem.
-        if (config('app.serverless')) {
+        if (config('app.vercel')) {
             return;
         }
 
