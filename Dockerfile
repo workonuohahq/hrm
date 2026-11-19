@@ -56,6 +56,17 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
 WORKDIR /var/www/html
 COPY . .
 
+# Laravel package discovery boots Blade and cache services, so create the
+# writable runtime directories before Composer's post-autoload scripts run.
+RUN mkdir -p \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R ug+rwX storage bootstrap/cache
+
 # Install PHP dependencies before building Vite because the Vite config uses
 # the installed Ziggy package from vendor/.
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-progress
