@@ -1,0 +1,32 @@
+# Git and deployment metadata
+.git
+.github
+.vercel
+
+# Local credentials and auth material
+.env
+.env.*
+!.env.example
+auth.json
+
+# Dependencies are installed inside the image
+vendor/
+node_modules/
+
+# Build output is recreated inside the image
+public/build/
+public/hot
+
+# Local mutable state and user uploads must not be baked into deployments
+storage/logs/
+storage/framework/
+storage/debugbar/
+storage/pail/
+storage/app/
+storage/installed
+public/storage
+
+# OS/editor noise
+.DS_Store
+.idea/
+.vscode/
