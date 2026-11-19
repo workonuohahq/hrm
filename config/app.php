@@ -36,6 +36,12 @@ return [
 
     'is_saas' => (bool) env('IS_SAAS', true),
 
+    // Set APP_INSTALLED=true after provisioning the external production database.
+    'installed' => (bool) env('APP_INSTALLED', false),
+
+    // Vercel functions use an ephemeral, read-only filesystem outside /tmp.
+    'serverless' => (bool) env('VERCEL', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL
