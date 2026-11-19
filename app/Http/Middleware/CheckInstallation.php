@@ -56,7 +56,7 @@ class CheckInstallation
      */
     private function isInstalled(): bool
     {
-        return file_exists(storage_path('installed'));
+        return isAppInstalled();
     }
 
     /**
