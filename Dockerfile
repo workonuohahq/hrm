@@ -59,6 +59,8 @@ COPY . .
 # Laravel package discovery boots Blade and cache services, so create the
 # writable runtime directories before Composer's post-autoload scripts run.
 RUN mkdir -p \
+        storage/app/private \
+        storage/app/public \
         storage/framework/cache/data \
         storage/framework/sessions \
         storage/framework/views \
@@ -78,6 +80,8 @@ RUN npm ci --no-audit --no-fund \
     && rm -rf node_modules
 
 RUN mkdir -p \
+        storage/app/private \
+        storage/app/public \
         storage/framework/cache/data \
         storage/framework/sessions \
         storage/framework/views \
