@@ -1,0 +1,39 @@
+name: HRM container build
+
+on:
+  push:
+    branches:
+      - vercel-deployment-prep
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build:
+    name: Build Laravel production image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Validate deployment configuration
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          config = json.loads(Path("vercel.json").read_text())
+          assert "hrm" in config["services"]
+          assert config["services"]["hrm"]["runtime"] == "container"
+          assert Path("Dockerfile").is_file()
+          assert Path("docker/entrypoint.sh").is_file()
+          print("Vercel service configuration is valid.")
+          PY
+          sh -n docker/entrypoint.sh
+
+      - name: Build production container
+        run: docker build --pull --tag hrm:ci .
