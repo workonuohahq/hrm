@@ -13,8 +13,22 @@ permissions:
 
 jobs:
   docker-build:
-    name: Build Laravel production image
+    name: Build and verify Laravel production image
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: hrm_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hrm_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Check out source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -37,3 +51,45 @@ jobs:
 
       - name: Build production container
         run: docker build --pull --tag hrm:ci .
+
+      - name: Verify all Laravel migrations against PostgreSQL 17
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        run: |
+          docker run --rm --network host \
+            -e APP_ENV=testing \
+            -e APP_DEBUG=false \
+            -e APP_KEY="$APP_KEY" \
+            -e APP_INSTALLED=false \
+            -e IS_SAAS=true \
+            -e IS_DEMO=false \
+            -e LOG_CHANNEL=stderr \
+            -e CACHE_STORE=array \
+            -e SESSION_DRIVER=array \
+            -e QUEUE_CONNECTION=sync \
+            -e DB_CONNECTION=pgsql \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=5432 \
+            -e DB_DATABASE=hrm_test \
+            -e DB_USERNAME=postgres \
+            -e DB_PASSWORD=postgres \
+            -e DB_SSLMODE=disable \
+            hrm:ci php artisan migrate --force --no-interaction
+
+          docker run --rm --network host \
+            -e APP_ENV=testing \
+            -e APP_DEBUG=false \
+            -e APP_KEY="$APP_KEY" \
+            -e APP_INSTALLED=false \
+            -e IS_SAAS=true \
+            -e CACHE_STORE=array \
+            -e SESSION_DRIVER=array \
+            -e QUEUE_CONNECTION=sync \
+            -e DB_CONNECTION=pgsql \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=5432 \
+            -e DB_DATABASE=hrm_test \
+            -e DB_USERNAME=postgres \
+            -e DB_PASSWORD=postgres \
+            -e DB_SSLMODE=disable \
+            hrm:ci php artisan migrate:status --no-interaction
