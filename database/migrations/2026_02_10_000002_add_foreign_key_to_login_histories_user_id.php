@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\Support\\Facades\\Schema;
 
 return new class extends Migration {
     /**
@@ -65,16 +65,27 @@ return new class extends Migration {
             fn (array $foreignKey): bool => in_array('user_id', $foreignKey['columns'] ?? [], true)
         );
 
-        Schema::table('login_histories', function (Blueprint $table) use ($hasUserForeignKey): void {
-            $table->unsignedBigInteger('user_id')->change();
+        // PostgreSQL requires an explicit USING expression when converting a
+        // legacy text/varchar column to bigint. Laravel's generic change()
+        // statement does not provide that expression.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement(
+                'ALTER TABLE "login_histories" ALTER COLUMN "user_id" TYPE BIGINT USING "user_id"::bigint'
+            );
+        } else {
+            Schema::table('login_histories', function (Blueprint $table): void {
+                $table->unsignedBigInteger('user_id')->change();
+            });
+        }
 
-            if (! $hasUserForeignKey) {
+        if (! $hasUserForeignKey) {
+            Schema::table('login_histories', function (Blueprint $table): void {
                 $table->foreign('user_id')
                     ->references('id')
                     ->on('users')
                     ->cascadeOnDelete();
-            }
-        });
+            });
+        }
     }
 
     /**
