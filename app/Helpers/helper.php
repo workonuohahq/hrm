@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
+if (!function_exists('isAppInstalled')) {
+    function isAppInstalled(): bool
+    {
+        return (bool) config('app.installed', false) || file_exists(storage_path('installed'));
+    }
+}
+
 if (!function_exists('getCacheSize')) {
     /**
      * Get the total cache size in MB
@@ -44,7 +51,7 @@ if (!function_exists('settings')) {
     function settings($user_id = null)
     {
         // Skip database queries during installation
-        if (request()->is('install/*') || request()->is('update/*') || !file_exists(storage_path('installed'))) {
+        if (request()->is('install/*') || request()->is('update/*') || !isAppInstalled()) {
             return [];
         }
 
