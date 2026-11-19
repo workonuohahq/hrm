@@ -3,7 +3,6 @@
   "services": {
     "hrm": {
       "runtime": "container",
-      "root": ".",
       "entrypoint": "Dockerfile"
     }
   },
