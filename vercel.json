@@ -1,70 +1,18 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "api/index.php",
-            "use": "vercel-php@0.9.0",
-            "config": {
-                "maxDuration": 60
-            }
-        },
-        {
-            "src": "public/build/**",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "public/images/**",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "public/js/**",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "public/installer/**",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "public/screenshots/**",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "public/logo.svg",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "public/robots.txt",
-            "use": "@vercel/static"
-        }
-    ],
-    "routes": [
-        {
-            "src": "^/build/(.*)$",
-            "dest": "public/build/$1"
-        },
-        {
-            "src": "^/images/(.*)$",
-            "dest": "public/images/$1"
-        },
-        {
-            "src": "^/js/(.*)$",
-            "dest": "public/js/$1"
-        },
-        {
-            "src": "^/installer/(.*)$",
-            "dest": "public/installer/$1"
-        },
-        {
-            "src": "^/screenshots/(.*)$",
-            "dest": "public/screenshots/$1"
-        },
-        {
-            "src": "^/(logo\\.svg|robots\\.txt)$",
-            "dest": "public/$1"
-        },
-        {
-            "src": "^/(.*)$",
-            "dest": "api/index.php"
-        }
-    ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "hrm": {
+      "runtime": "container",
+      "root": ".",
+      "entrypoint": "Dockerfile"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "hrm"
+      }
+    }
+  ]
 }
