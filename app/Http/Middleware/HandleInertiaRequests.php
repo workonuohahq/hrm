@@ -44,7 +44,7 @@ class HandleInertiaRequests extends Middleware
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         // Skip database queries during installation
-        if ($request->is('install/*') || $request->is('update/*') || !file_exists(storage_path('installed'))) {
+        if ($request->is('install/*') || $request->is('update/*') || !isAppInstalled()) {
             // Get available languages even during installation
             $languagesFile = resource_path('lang/language.json');
             $availableLanguages = [];
