@@ -39,8 +39,8 @@ return [
     // Set APP_INSTALLED=true after provisioning the external production database.
     'installed' => (bool) env('APP_INSTALLED', false),
 
-    // Vercel functions use an ephemeral, read-only filesystem outside /tmp.
-    'serverless' => (bool) env('VERCEL', false),
+    // Vercel deployments should use external object storage for durable uploads.
+    'vercel' => (bool) env('VERCEL', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -48,7 +48,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', env('VERCEL_PROJECT_PRODUCTION_URL') ? 'https://' . env('VERCEL_PROJECT_PRODUCTION_URL') : (env('VERCEL_URL') ? 'https://' . env('VERCEL_URL') : 'http://localhost')),
 
     /*
     |--------------------------------------------------------------------------
