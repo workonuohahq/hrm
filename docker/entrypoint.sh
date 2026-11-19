@@ -9,6 +9,8 @@ sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-avail
 
 # Ensure Laravel's writable runtime directories exist in the container.
 mkdir -p \
+    /var/www/html/storage/app/private \
+    /var/www/html/storage/app/public \
     /var/www/html/storage/framework/cache/data \
     /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
