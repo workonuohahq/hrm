@@ -17,7 +17,7 @@ class CheckInstallation
         // ephemeral storage/installed marker. Close installer routes explicitly
         // once provisioning has been completed through APP_INSTALLED=true.
         if ($request->is('install') || $request->is('install/*')) {
-            if (filter_var(env('APP_INSTALLED', false), FILTER_VALIDATE_BOOLEAN)) {
+            if ((bool) config('app.installed', false)) {
                 abort(404);
             }
 
@@ -26,7 +26,6 @@ class CheckInstallation
 
         // Skip check for installer routes, API routes, and static assets
         if (
-            $request->is('install/*') ||
             $request->is('update/*') ||
             $request->is('css/*') ||
             $request->is('js/*') ||
