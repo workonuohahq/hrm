@@ -1,5 +1,7 @@
 import '../css/app.css';
 import '../css/dark-mode.css';
+import '../css/motion-system.css';
+import './utils/motion';
 
 import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
