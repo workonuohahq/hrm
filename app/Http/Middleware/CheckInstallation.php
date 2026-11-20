@@ -40,7 +40,7 @@ class CheckInstallation
             return $next($request);
         }
 
-        // If not installed, redirect to /install
+        // APP_INSTALLED is authoritative for Vercel's stateless filesystem.
         if (!$this->isInstalled()) {
             return redirect('/install');
         }
@@ -54,19 +54,20 @@ class CheckInstallation
             if (auth()->check() && auth()->user()->hasRole('company') && $this->needsMigration()) {
                 return redirect('/update');
             }
-            
         }
-
 
         return $next($request);
     }
 
     /**
-     * Check if application is installed
+     * Check if application is installed.
+     *
+     * APP_INSTALLED is required on Vercel because its filesystem is ephemeral
+     * and the installer's local installation marker is not persistent.
      */
     private function isInstalled(): bool
     {
-        return isAppInstalled();
+        return (bool) config('app.installed', false) || isAppInstalled();
     }
 
     /**
