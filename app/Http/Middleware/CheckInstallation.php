@@ -13,6 +13,17 @@ class CheckInstallation
      */
     public function handle(Request $request, Closure $next)
     {
+        // Vercel deployments use environment variables, not the installer's
+        // ephemeral storage/installed marker. Close installer routes explicitly
+        // once provisioning has been completed through APP_INSTALLED=true.
+        if ($request->is('install') || $request->is('install/*')) {
+            if (filter_var(env('APP_INSTALLED', false), FILTER_VALIDATE_BOOLEAN)) {
+                abort(404);
+            }
+
+            return $next($request);
+        }
+
         // Skip check for installer routes, API routes, and static assets
         if (
             $request->is('install/*') ||
