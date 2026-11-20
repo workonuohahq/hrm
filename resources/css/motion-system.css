@@ -186,7 +186,6 @@ body {
 
 /* A calm, premium neutral foundation; user-configured brand colours remain dynamic. */
 :root {
-    --theme-color: #4f46e5;
     --background: oklch(0.985 0.008 255);
     --foreground: oklch(0.235 0.025 258);
     --card: oklch(1 0 0);
@@ -292,5 +291,129 @@ body {
     #app main .rounded-xl.border:hover,
     #app main .rounded-2xl.border:hover {
         transform: none;
+    }
+}
+
+
+/* Page-to-page motion: replays on every Inertia navigation, not only first load. */
+@keyframes hrm-main-enter {
+    from { opacity: .35; transform: translate3d(0, 9px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.motion-enabled #app main.hrm-page-enter {
+    animation: hrm-main-enter 480ms var(--hrm-motion-ease) both;
+}
+
+/* Landing hero: layered ambient colour, confident typography, and a gentle product preview float. */
+.motion-enabled #hero {
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.motion-enabled #hero::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    width: min(78vw, 920px);
+    aspect-ratio: 1;
+    top: -46%;
+    right: -18%;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--brand-color, var(--theme-color, #4f46e5)) 18%, transparent), transparent 68%);
+    filter: blur(20px);
+    animation: hrm-gradient-drift 16s ease-in-out infinite;
+}
+
+.motion-enabled #hero h1 {
+    animation: hrm-hero-copy 820ms var(--hrm-motion-ease) both;
+}
+
+.motion-enabled #hero p {
+    animation: hrm-hero-copy 820ms var(--hrm-motion-ease) 100ms both;
+}
+
+.motion-enabled #hero a {
+    animation: hrm-hero-copy 820ms var(--hrm-motion-ease) 180ms both;
+}
+
+.motion-enabled #hero img {
+    transform-origin: center;
+    animation: hrm-float 8s ease-in-out 350ms infinite;
+    box-shadow: 0 32px 80px -42px rgba(15, 23, 42, .42);
+}
+
+@keyframes hrm-hero-copy {
+    from { opacity: 0; transform: translate3d(0, 18px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Auth screens: subtle ambient light and a focused, elevated sign-in panel. */
+.motion-enabled .auth-layout {
+    isolation: isolate;
+    background:
+        radial-gradient(ellipse at 12% 18%, color-mix(in srgb, var(--theme-color, #4f46e5) 10%, transparent), transparent 42%),
+        radial-gradient(ellipse at 88% 82%, rgba(14, 165, 233, .08), transparent 40%),
+        var(--background, #f8fafc);
+}
+
+.motion-enabled .auth-layout > .relative,
+.motion-enabled .auth-layout > .flex {
+    position: relative;
+    z-index: 1;
+}
+
+.motion-enabled .auth-layout .max-w-md > .relative > .bg-white {
+    border-radius: 1.25rem;
+    box-shadow: 0 28px 80px -42px rgba(15, 23, 42, .35);
+    transition: box-shadow 360ms var(--hrm-motion-ease), transform 360ms var(--hrm-motion-ease);
+}
+
+.motion-enabled .auth-layout .max-w-md > .relative > .bg-white:focus-within {
+    box-shadow: 0 32px 90px -42px color-mix(in srgb, var(--theme-color, #4f46e5) 34%, transparent);
+}
+
+/* Consistent depth and legibility for dashboard surfaces. */
+.motion-enabled #app aside {
+    border-color: color-mix(in srgb, var(--border, #e5e7eb) 82%, transparent);
+}
+
+.motion-enabled #app main table tbody tr {
+    transition: background-color 180ms ease;
+}
+
+.motion-enabled #app main table tbody tr:hover {
+    background-color: color-mix(in srgb, var(--theme-color, #4f46e5) 4%, var(--card, white));
+}
+
+.motion-enabled #app main :is(h1, h2, h3) {
+    letter-spacing: -.025em;
+}
+
+.motion-enabled #app main .rounded-xl.border,
+.motion-enabled #app main .rounded-2xl.border {
+    border-radius: 1rem;
+}
+
+/* Avoid sticky hover transforms on touch screens and keep animation safe on low-motion devices. */
+@media (prefers-reduced-motion: reduce) {
+    .motion-enabled #hero::before,
+    .motion-enabled #hero h1,
+    .motion-enabled #hero p,
+    .motion-enabled #hero a,
+    .motion-enabled #hero img,
+    .motion-enabled #app main.hrm-page-enter {
+        animation: none !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .motion-enabled #hero img {
+        animation-duration: 10s;
+    }
+
+    .motion-enabled .auth-layout .max-w-md > .relative > .bg-white {
+        border-radius: 1rem;
     }
 }
