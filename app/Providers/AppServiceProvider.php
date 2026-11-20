@@ -8,6 +8,7 @@ use App\Observers\UserObserver;
 use App\Observers\PlanObserver;
 use App\Providers\AssetServiceProvider;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Vercel serves the application over HTTPS and forwards traffic to Apache
+        // over HTTP. Keep all generated asset, route, and Ziggy URLs HTTPS.
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Register the UserObserver
         User::observe(UserObserver::class);
         
