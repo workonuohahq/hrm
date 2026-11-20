@@ -183,3 +183,114 @@ body {
         transform: none !important;
     }
 }
+
+/* A calm, premium neutral foundation; user-configured brand colours remain dynamic. */
+:root {
+    --theme-color: #4f46e5;
+    --background: oklch(0.985 0.008 255);
+    --foreground: oklch(0.235 0.025 258);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.235 0.025 258);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.235 0.025 258);
+    --secondary: oklch(0.965 0.012 255);
+    --secondary-foreground: oklch(0.30 0.025 258);
+    --muted: oklch(0.965 0.012 255);
+    --muted-foreground: oklch(0.53 0.025 258);
+    --accent: oklch(0.955 0.025 255);
+    --accent-foreground: oklch(0.30 0.04 258);
+    --border: oklch(0.92 0.014 255);
+    --input: oklch(0.92 0.014 255);
+    --ring: oklch(0.68 0.13 275);
+    --sidebar: oklch(0.99 0.006 255);
+    --sidebar-foreground: oklch(0.28 0.025 258);
+    --sidebar-border: oklch(0.93 0.012 255);
+    --radius: 0.9rem;
+}
+
+.dark {
+    --background: oklch(0.16 0.018 258);
+    --foreground: oklch(0.94 0.012 255);
+    --card: oklch(0.195 0.02 258);
+    --card-foreground: oklch(0.94 0.012 255);
+    --popover: oklch(0.195 0.02 258);
+    --popover-foreground: oklch(0.94 0.012 255);
+    --secondary: oklch(0.24 0.022 258);
+    --secondary-foreground: oklch(0.92 0.012 255);
+    --muted: oklch(0.24 0.022 258);
+    --muted-foreground: oklch(0.70 0.02 255);
+    --accent: oklch(0.26 0.035 270);
+    --accent-foreground: oklch(0.94 0.012 255);
+    --border: oklch(0.30 0.02 258);
+    --input: oklch(0.30 0.02 258);
+    --ring: oklch(0.60 0.13 275);
+    --sidebar: oklch(0.18 0.02 258);
+    --sidebar-foreground: oklch(0.92 0.012 255);
+    --sidebar-border: oklch(0.28 0.02 258);
+}
+
+#app aside {
+    backdrop-filter: saturate(140%) blur(16px);
+}
+
+#app header {
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+}
+
+#app main {
+    isolation: isolate;
+}
+
+#app main [data-slot="card"],
+#app main .rounded-xl.border,
+#app main .rounded-2xl.border {
+    border-color: color-mix(in srgb, var(--border) 86%, transparent);
+    box-shadow: 0 8px 28px -24px rgba(15, 23, 42, .24);
+}
+
+.dark #app main [data-slot="card"],
+.dark #app main .rounded-xl.border,
+.dark #app main .rounded-2xl.border {
+    box-shadow: 0 12px 32px -26px rgba(0, 0, 0, .7);
+}
+
+#app form {
+    position: relative;
+}
+
+#app form input:not([type="checkbox"]):not([type="radio"]),
+#app form textarea,
+#app form select {
+    border-radius: .75rem;
+}
+
+#app :is(button, a).bg-primary,
+#app button[type="submit"] {
+    box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--theme-color, #4f46e5) 65%, transparent);
+}
+
+#app :is(button, a).bg-primary:hover,
+#app button[type="submit"]:hover {
+    box-shadow: 0 12px 24px -12px color-mix(in srgb, var(--theme-color, #4f46e5) 72%, transparent);
+}
+
+#hero {
+    isolation: isolate;
+    overflow: hidden;
+}
+
+#hero > .relative {
+    z-index: 1;
+}
+
+@media (max-width: 640px) {
+    .motion-enabled [data-motion="rise"] {
+        transform: translate3d(0, 14px, 0);
+    }
+
+    #app main [data-slot="card"]:hover,
+    #app main .rounded-xl.border:hover,
+    #app main .rounded-2xl.border:hover {
+        transform: none;
+    }
+}
