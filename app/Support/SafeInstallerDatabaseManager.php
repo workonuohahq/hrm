@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Support;
+namespace App\Support;
 
-use Illuminate\\Support\\Facades\\Artisan;
-use RachidLaasri\\LaravelInstaller\\Helpers\\DatabaseManager as BaseDatabaseManager;
-use Symfony\\Component\\Console\\Output\\BufferedOutput;
+use Illuminate\Support\Facades\Artisan;
+use RachidLaasri\LaravelInstaller\Helpers\DatabaseManager as BaseDatabaseManager;
+use Symfony\Component\Console\Output\BufferedOutput;
 
 /**
  * Make the legacy web installer respect Artisan exit codes.
