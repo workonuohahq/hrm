@@ -16,7 +16,7 @@ return [
         'minPhpVersion' => '8.2.0',
     ],
     'final' => [
-        'key' => true,
+        'key' => empty(env('APP_KEY')),
         'publish' => true,
     ],
     'requirements' => [
