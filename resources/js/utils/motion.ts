@@ -41,7 +41,6 @@ export function installHrMotion() {
             frame = 0;
             document.querySelectorAll<HTMLElement>(SELECTORS).forEach((element, index) => {
                 if (element.dataset.motionPrepared) return;
-                if (element.closest('[data-motion="rise"]')) return;
 
                 element.dataset.motion = 'rise';
                 element.dataset.motionPrepared = 'true';
