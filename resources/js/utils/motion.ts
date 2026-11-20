@@ -1,4 +1,4 @@
-type MotionWindow = Window & { refreshHrMotion?: () => void };
+import { router } from '@inertiajs/react';
 
 const SELECTORS = [
     '#app main > div',
@@ -10,79 +10,112 @@ const SELECTORS = [
     '#app form',
 ].join(',');
 
+type MotionElement = HTMLElement & {
+    dataset: DOMStringMap & {
+        motion?: string;
+        motionPrepared?: string;
+        motionVisible?: string;
+    };
+};
+
 export function installHrMotion() {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (document.documentElement.dataset.hrmMotionInstalled === 'true') return;
 
-    const motionWindow = window as MotionWindow;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    document.documentElement.dataset.hrmMotionInstalled = 'true';
 
-    if (reducedMotion.matches) {
-        document.documentElement.classList.add('motion-reduced');
-        return;
-    }
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let observer: IntersectionObserver | null = null;
 
-    document.documentElement.classList.add('motion-enabled');
+    const setMotionMode = () => {
+        const reduced = preference.matches;
+        document.documentElement.classList.toggle('motion-reduced', reduced);
+        document.documentElement.classList.toggle('motion-enabled', !reduced);
 
-    const observer = 'IntersectionObserver' in window
-        ? new IntersectionObserver((entries, currentObserver) => {
-            entries.forEach((entry) => {
-                if (!entry.isIntersecting) return;
-                (entry.target as HTMLElement).dataset.motionVisible = 'true';
-                currentObserver.unobserve(entry.target);
+        if (reduced) {
+            observer?.disconnect();
+            observer = null;
+            document.querySelectorAll<MotionElement>('[data-motion]').forEach((element) => {
+                element.dataset.motionVisible = 'true';
             });
-        }, { threshold: 0.08, rootMargin: '0px 0px -36px 0px' })
-        : null;
+            return;
+        }
 
-    let frame = 0;
+        observer?.disconnect();
+        observer = 'IntersectionObserver' in window
+            ? new IntersectionObserver((entries, currentObserver) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    (entry.target as MotionElement).dataset.motionVisible = 'true';
+                    currentObserver.unobserve(entry.target);
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -36px 0px' })
+            : null;
 
-    const refresh = () => {
-        if (frame) window.cancelAnimationFrame(frame);
-        frame = window.requestAnimationFrame(() => {
-            frame = 0;
-            document.querySelectorAll<HTMLElement>(SELECTORS).forEach((element, index) => {
-                if (element.dataset.motionPrepared) return;
+        scan(document);
+    };
 
-                element.dataset.motion = 'rise';
-                element.dataset.motionPrepared = 'true';
-                element.style.setProperty('--motion-delay', `${Math.min(index % 5, 4) * 65}ms`);
+    const prepare = (element: MotionElement, index: number) => {
+        if (element.dataset.motionPrepared) return;
 
-                if (observer) {
-                    observer.observe(element);
-                } else {
-                    element.dataset.motionVisible = 'true';
-                }
-            });
+        element.dataset.motion = 'rise';
+        element.dataset.motionPrepared = 'true';
+        element.style.setProperty('--motion-delay', `${Math.min(index % 5, 4) * 65}ms`);
 
-            document.querySelectorAll<HTMLElement>('#hero, .auth-layout, [data-auth-layout]').forEach((element) => {
-                element.classList.add('motion-ambient');
-            });
+        if (preference.matches || !observer) {
+            element.dataset.motionVisible = 'true';
+        } else {
+            observer.observe(element);
+        }
+    };
+
+    const scan = (root: ParentNode) => {
+        if (preference.matches) return;
+
+        const matches: Element[] = [];
+        if (root instanceof Element && root.matches(SELECTORS)) matches.push(root);
+        root.querySelectorAll(SELECTORS).forEach((element) => matches.push(element));
+
+        matches.forEach((element, index) => prepare(element as MotionElement, index));
+        document.querySelectorAll<HTMLElement>('#hero, .auth-layout, [data-auth-layout]').forEach((element) => {
+            element.classList.add('motion-ambient');
         });
     };
 
-    motionWindow.refreshHrMotion = refresh;
-    refresh();
+    const animatePage = () => {
+        const main = document.querySelector<HTMLElement>('#app main');
+        if (!main || preference.matches) return;
+
+        main.classList.remove('hrm-page-enter');
+        void main.offsetWidth;
+        main.classList.add('hrm-page-enter');
+        scan(document);
+    };
+
+    setMotionMode();
 
     const mutations = new MutationObserver((records) => {
-        if (records.some((record) => record.addedNodes.length > 0)) refresh();
-    });
-
-    mutations.observe(document.body, { childList: true, subtree: true });
-
-    document.addEventListener('inertia:navigate', refresh);
-    window.addEventListener('pageshow', refresh);
-
-    reducedMotion.addEventListener('change', (event) => {
-        if (event.matches) {
-            observer?.disconnect();
-            document.documentElement.classList.add('motion-reduced');
-            document.querySelectorAll<HTMLElement>('[data-motion]').forEach((element) => {
-                element.dataset.motionVisible = 'true';
+        if (preference.matches) return;
+        records.forEach((record) => {
+            record.addedNodes.forEach((node) => {
+                if (node instanceof Element) scan(node);
             });
-        } else {
-            document.documentElement.classList.remove('motion-reduced');
-            refresh();
-        }
+        });
     });
+
+    if (document.body) {
+        mutations.observe(document.body, { childList: true, subtree: true });
+    }
+
+    preference.addEventListener('change', () => {
+        setMotionMode();
+    });
+
+    router.on('navigate', () => {
+        animatePage();
+    });
+
+    window.addEventListener('pageshow', () => scan(document));
 }
 
 installHrMotion();
