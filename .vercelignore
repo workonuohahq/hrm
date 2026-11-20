@@ -1,0 +1,15 @@
+# Build dependencies are installed during Vercel's PHP build.
+/vendor/
+/node_modules/
+
+# Never upload local credentials or developer-only files.
+.env
+.env.*
+!.env.example
+/auth.json
+
+# Runtime state must live in external services or Vercel's /tmp directory.
+storage/logs/
+storage/framework/
+storage/debugbar/
+storage/pail/

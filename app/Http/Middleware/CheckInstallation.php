@@ -13,9 +13,19 @@ class CheckInstallation
      */
     public function handle(Request $request, Closure $next)
     {
+        // Vercel deployments use environment variables, not the installer's
+        // ephemeral storage/installed marker. Close installer routes explicitly
+        // once provisioning has been completed through APP_INSTALLED=true.
+        if ($request->is('install') || $request->is('install/*')) {
+            if ((bool) config('app.installed', false)) {
+                abort(404);
+            }
+
+            return $next($request);
+        }
+
         // Skip check for installer routes, API routes, and static assets
         if (
-            $request->is('install/*') ||
             $request->is('update/*') ||
             $request->is('css/*') ||
             $request->is('js/*') ||
@@ -30,7 +40,7 @@ class CheckInstallation
             return $next($request);
         }
 
-        // If not installed, redirect to /install
+        // APP_INSTALLED is authoritative for Vercel's stateless filesystem.
         if (!$this->isInstalled()) {
             return redirect('/install');
         }
@@ -44,19 +54,20 @@ class CheckInstallation
             if (auth()->check() && auth()->user()->hasRole('company') && $this->needsMigration()) {
                 return redirect('/update');
             }
-            
         }
-
 
         return $next($request);
     }
 
     /**
-     * Check if application is installed
+     * Check if application is installed.
+     *
+     * APP_INSTALLED is required on Vercel because its filesystem is ephemeral
+     * and the installer's local installation marker is not persistent.
      */
     private function isInstalled(): bool
     {
-        return file_exists(storage_path('installed'));
+        return (bool) config('app.installed', false) || isAppInstalled();
     }
 
     /**

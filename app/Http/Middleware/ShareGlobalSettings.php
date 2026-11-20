@@ -19,7 +19,7 @@ class ShareGlobalSettings
         $this->ensureStorageLink();
 
         // Skip during installation
-        if (!$request->is('install/*') && !$request->is('update/*') && file_exists(storage_path('installed'))) {
+        if (!$request->is('install/*') && !$request->is('update/*') && isAppInstalled()) {
             // Share settings with all Inertia responses
             Inertia::share([
                 'globalSettings' => function () {
@@ -36,6 +36,12 @@ class ShareGlobalSettings
      */
     private function ensureStorageLink()
     {
+        // Serverless deployments use remote object storage; do not try to create
+        // a symlink in Vercel's read-only deployment filesystem.
+        if (config('app.vercel')) {
+            return;
+        }
+
         if (!File::exists(public_path('storage'))) {
             try {
                 Artisan::call('storage:link');

@@ -1,0 +1,138 @@
+name: HRM container build
+
+on:
+  push:
+    branches:
+      - vercel-deployment-prep
+      - fix/postgres17-migration-compatibility
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build:
+    name: Build and verify Laravel production image
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: hrm_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hrm_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Validate deployment configuration
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          config = json.loads(Path("vercel.json").read_text())
+          assert "hrm" in config["services"]
+          assert config["services"]["hrm"]["runtime"] == "container"
+          assert Path("Dockerfile").is_file()
+          assert Path("docker/entrypoint.sh").is_file()
+          print("Vercel service configuration is valid.")
+          PY
+          sh -n docker/entrypoint.sh
+
+      - name: Audit migrations for dialect-specific and destructive operations
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          mysql_patterns = {
+              "DATABASE()": r"\bDATABASE\s*\(",
+              "DROP FOREIGN KEY": r"\bDROP\s+FOREIGN\s+KEY\b",
+              "MySQL information_schema": r"information_schema\.REFERENTIAL_CONSTRAINTS",
+              "SHOW TABLES/COLUMNS": r"\bSHOW\s+(?:TABLES|COLUMNS)\b",
+              "AUTO_INCREMENT": r"\bAUTO_INCREMENT\b",
+              "ENGINE=": r"\bENGINE\s*=",
+          }
+          destructive_patterns = {
+              "drop table": r"Schema::drop(?:IfExists)?\s*\(",
+              "drop column": r"->dropColumn\s*\(",
+              "drop foreign key": r"->dropForeign\s*\(",
+              "drop index": r"->drop(?:Index|Unique|Primary)\s*\(",
+              "truncate": r"\bTRUNCATE\b",
+              "raw delete": r"\bDELETE\s+FROM\b",
+          }
+
+          mysql_hits = []
+          destructive_hits = []
+          for path in sorted(Path("database/migrations").glob("*.php")):
+              source = path.read_text(errors="replace")
+              for label, pattern in mysql_patterns.items():
+                  if re.search(pattern, source, re.IGNORECASE):
+                      mysql_hits.append(f"{path}: {label}")
+              for label, pattern in destructive_patterns.items():
+                  if re.search(pattern, source, re.IGNORECASE):
+                      destructive_hits.append(f"{path}: {label}")
+
+          print("MySQL-specific SQL patterns:")
+          print("\n".join(mysql_hits) if mysql_hits else "None detected.")
+          print("\nDestructive/rollback-sensitive operations (manual review required):")
+          print("\n".join(destructive_hits) if destructive_hits else "None detected.")
+          if mysql_hits:
+              raise SystemExit("MySQL-specific SQL detected; review for driver compatibility.")
+          PY
+
+      - name: Build production container
+        run: docker build --pull --tag hrm:ci .
+
+      - name: Verify all Laravel migrations against PostgreSQL 17
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        run: |
+          docker run --rm --network host \
+            -e APP_ENV=testing \
+            -e APP_DEBUG=false \
+            -e APP_KEY="$APP_KEY" \
+            -e APP_INSTALLED=false \
+            -e IS_SAAS=true \
+            -e IS_DEMO=false \
+            -e LOG_CHANNEL=stderr \
+            -e CACHE_STORE=array \
+            -e SESSION_DRIVER=array \
+            -e QUEUE_CONNECTION=sync \
+            -e DB_CONNECTION=pgsql \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=5432 \
+            -e DB_DATABASE=hrm_test \
+            -e DB_USERNAME=postgres \
+            -e DB_PASSWORD=postgres \
+            -e DB_SSLMODE=disable \
+            hrm:ci php artisan migrate --force --no-interaction
+
+          docker run --rm --network host \
+            -e APP_ENV=testing \
+            -e APP_DEBUG=false \
+            -e APP_KEY="$APP_KEY" \
+            -e APP_INSTALLED=false \
+            -e IS_SAAS=true \
+            -e CACHE_STORE=array \
+            -e SESSION_DRIVER=array \
+            -e QUEUE_CONNECTION=sync \
+            -e DB_CONNECTION=pgsql \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=5432 \
+            -e DB_DATABASE=hrm_test \
+            -e DB_USERNAME=postgres \
+            -e DB_PASSWORD=postgres \
+            -e DB_SSLMODE=disable \
+            hrm:ci php artisan migrate:status --no-interaction
