@@ -177,7 +177,7 @@ export default function AuthLayout({
     }, [applyRTLDirection]);
 
     return (
-        <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+        <div className="auth-layout min-h-screen bg-gray-50 relative overflow-hidden" data-auth-layout>
             <Head title={title} />
 
             {/* Enhanced Background Design */}
